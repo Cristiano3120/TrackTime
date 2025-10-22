@@ -1,28 +1,41 @@
-﻿namespace TrackTime;
+﻿using TrackTime.Sqlite;
+
+namespace TrackTime;
 
 internal static class Program
 {
     private readonly static (string optionDescription, Action callback)[] _options =
     [
         ("Show stats", HandleUserInput.ShowStats),
-        ("Add a process to track", HandleUserInput.AddProcess)
+        ("Add a process to track", HandleUserInput.AddProcess),
+        ("Remove a process", HandleUserInput.RemoveProcess)
     ];
-    //Foreground time and time overall tracken
-    //Maybe update funktion
+
     static void Main()
     {
-        ShowOptions();
-        ReadUserInput();
+        SqliteDatabase sqliteDatabase = new(null);
+        sqliteDatabase.CreateTable<TrackedProcess>();
+
+        List<string> processNames = [.. sqliteDatabase.GetAll<TrackedProcess>().Select(x => x.ProcessName)];
+        Tracker.StartTracking(processNames);
+        Autostart.AddToStartup();
+
+        while (true)
+        {
+            ShowOptions();
+        }
     }
 
     static void ShowOptions()
     {
         for (int i = 0; i < _options.Length; i++)
         {
-            Console.WriteLine($"{i}.{_options[i].optionDescription}");
+            Console.WriteLine($"{i +1}.{_options[i].optionDescription}");
         }
 
-        Console.WriteLine("\n Choose an option\n");
+        Console.WriteLine("\nChoose an option:\n");
+
+        ReadUserInput();
     }
 
     internal static void ReadUserInput()
